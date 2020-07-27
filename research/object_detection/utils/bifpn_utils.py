@@ -287,6 +287,7 @@ class BiFPNCombineLayer(tf.keras.layers.Layer):
     """
     super(BiFPNCombineLayer, self).__init__(**kwargs)
     self.combine_method = combine_method
+    print(f"Calling combine init, combine_method: {combine_method}")
 
   def _combine_weighted_sum(self, inputs):
     return tf.squeeze(
@@ -308,6 +309,7 @@ class BiFPNCombineLayer(tf.keras.layers.Layer):
         axis=[-1])
 
   def build(self, input_shape):
+    print(f"Calling combine build, input shape: {input_shape}")
     if not isinstance(input_shape, list):
       raise ValueError('A BiFPN combine layer should be called '
                        'on a list of inputs.')

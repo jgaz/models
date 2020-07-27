@@ -104,6 +104,8 @@ if tf_version.is_tf2():
           ssd_resnet_v1_fpn_keras.SSDResNet101V1FpnKerasFeatureExtractor,
       'ssd_resnet152_v1_fpn_keras':
           ssd_resnet_v1_fpn_keras.SSDResNet152V1FpnKerasFeatureExtractor,
+      'ssd_efficientnet-custom_bifpn_keras':
+          ssd_efficientnet_bifpn.SSDEfficientNetCustomBiFPNKerasFeatureExtractor,
       'ssd_efficientnet-b0_bifpn_keras':
           ssd_efficientnet_bifpn.SSDEfficientNetB0BiFPNKerasFeatureExtractor,
       'ssd_efficientnet-b1_bifpn_keras':

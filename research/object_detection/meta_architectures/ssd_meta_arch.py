@@ -567,6 +567,7 @@ class SSDMetaArch(model.DetectionModel):
     else:
       batchnorm_updates_collections = tf.GraphKeys.UPDATE_OPS
     if self._feature_extractor.is_keras_model:
+      print(preprocessed_inputs)
       feature_maps = self._feature_extractor(preprocessed_inputs)
     else:
       with slim.arg_scope([slim.batch_norm],

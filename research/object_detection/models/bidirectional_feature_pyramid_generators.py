@@ -23,7 +23,7 @@ import functools
 from six.moves import range
 from six.moves import zip
 import tensorflow as tf
-
+import sys
 from object_detection.utils import bifpn_utils
 
 
@@ -443,6 +443,7 @@ class KerasBiFpnFeatureMaps(tf.keras.Model):
       all_node_params.append(node_config)
       all_node_names.append(node_config['name'])
 
+
   def call(self, feature_pyramid):
     """Compute BiFPN feature maps from input feature pyramid.
 
@@ -482,5 +483,6 @@ class KerasBiFpnFeatureMaps(tf.keras.Model):
           index = self.bifpn_output_node_names.index(node['name'])
           output_feature_maps[index] = node_result
 
-    return collections.OrderedDict(
+    m = collections.OrderedDict(
         zip(self.bifpn_output_node_names, output_feature_maps))
+    return m

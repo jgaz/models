@@ -113,8 +113,9 @@ def _compute_losses_and_predictions_dicts(
 
   """
   model_lib.provide_groundtruth(model, labels)
+  print(f"\n\n{model}, {features}\n\n")
   preprocessed_images = features[fields.InputDataFields.image]
-
+  print(f"\nPreprocessed images: {preprocessed_images}\n")
   prediction_dict = model.predict(
       preprocessed_images,
       features[fields.InputDataFields.true_image_shape])
@@ -343,7 +344,6 @@ def load_fine_tune_checkpoint(
   def _dummy_computation_fn(features, labels):
     model._is_training = False  # pylint: disable=protected-access
     tf.keras.backend.set_learning_phase(False)
-
     labels = model_lib.unstack_batch(
         labels, unpad_groundtruth_tensors=unpad_groundtruth_tensors)
 
@@ -369,7 +369,7 @@ def load_fine_tune_checkpoint(
   restore_from_objects_dict = model.restore_from_objects(
       fine_tune_checkpoint_type=checkpoint_type)
   validate_tf_v2_checkpoint_restore_map(restore_from_objects_dict)
-  ckpt = tf.train.Checkpoint(**restore_from_objects_dict)
+  ckpt: tf.train.Checkpoint = tf.train.Checkpoint(**restore_from_objects_dict)
   ckpt.restore(checkpoint_path).assert_existing_objects_matched()
 
 

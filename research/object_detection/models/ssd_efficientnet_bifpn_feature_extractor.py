@@ -32,6 +32,8 @@ from object_detection.utils import tf_version
 if tf_version.is_tf2():
   from official.vision.image_classification.efficientnet import efficientnet_model
 
+"""
+Official endpoints
 _EFFICIENTNET_LEVEL_ENDPOINTS = {
     1: 'stack_0/block_0/project_bn',
     2: 'stack_1/block_1/add',
@@ -39,7 +41,15 @@ _EFFICIENTNET_LEVEL_ENDPOINTS = {
     4: 'stack_4/block_2/add',
     5: 'stack_6/block_0/project_bn',
 }
-
+"""
+# Highjacked endpoints
+_EFFICIENTNET_LEVEL_ENDPOINTS = {
+    1: 'block1a_project_bn',
+    2: 'block2b_add',
+    3: 'block2b_add',
+    4: 'block4c_add',
+    5: 'block6a_project_bn'
+}
 
 class SSDEfficientNetBiFPNKerasFeatureExtractor(
     ssd_meta_arch.SSDKerasFeatureExtractor):
@@ -225,6 +235,97 @@ class SSDEfficientNetBiFPNKerasFeatureExtractor(
 
     return list(output_feature_map_dict.values())
 
+class SSDEfficientNetCustomBiFPNKerasFeatureExtractor(
+    SSDEfficientNetBiFPNKerasFeatureExtractor):
+  """SSD Keras EfficientNet-Custom BiFPN (EfficientDet-d0) Feature Extractor."""
+
+  def __init__(self,
+               is_training,
+               depth_multiplier,
+               min_depth,
+               pad_to_multiple,
+               conv_hyperparams,
+               freeze_batchnorm,
+               inplace_batchnorm_update,
+               bifpn_min_level=3,
+               bifpn_max_level=7,
+               bifpn_num_iterations=3,
+               bifpn_num_filters=64,
+               bifpn_combine_method='fast_attention',
+               use_explicit_padding=None,
+               use_depthwise=None,
+               override_base_feature_extractor_hyperparams=None,
+               name='EfficientDet-Custom'):
+    """SSD Keras EfficientNet-b0 BiFPN (EfficientDet-d0) Feature Extractor.
+
+    Args:
+
+    """
+    super(SSDEfficientNetBiFPNKerasFeatureExtractor, self).__init__(
+        is_training=is_training,
+        depth_multiplier=depth_multiplier,
+        min_depth=min_depth,
+        pad_to_multiple=pad_to_multiple,
+        conv_hyperparams=conv_hyperparams,
+        freeze_batchnorm=freeze_batchnorm,
+        inplace_batchnorm_update=inplace_batchnorm_update,
+        use_explicit_padding=None,
+        use_depthwise=None,
+        override_base_feature_extractor_hyperparams=
+        override_base_feature_extractor_hyperparams,
+        name=name)
+    if depth_multiplier != 1.0:
+        raise ValueError('EfficientNetBiFPN does not support a non-default '
+                         'depth_multiplier.')
+    if use_explicit_padding:
+        raise ValueError('EfficientNetBiFPN does not support explicit padding.')
+    if use_depthwise:
+        raise ValueError('EfficientNetBiFPN does not support use_depthwise.')
+    if override_base_feature_extractor_hyperparams:
+        raise ValueError('EfficientNetBiFPN does not support '
+                         'override_base_feature_extractor_hyperparams.')
+
+    self._bifpn_min_level = bifpn_min_level
+    self._bifpn_max_level = bifpn_max_level
+    self._bifpn_num_iterations = bifpn_num_iterations
+    self._bifpn_num_filters = max(bifpn_num_filters, min_depth)
+    self._bifpn_node_params = {'combine_method': bifpn_combine_method}
+    self._efficientnet_version = 'efficientnet-custom'
+
+    logging.info('EfficientDet EfficientNet backbone version: %s',
+                 self._efficientnet_version)
+    logging.info('EfficientDet BiFPN num filters: %d', self._bifpn_num_filters)
+    logging.info('EfficientDet BiFPN num iterations: %d',
+                 self._bifpn_num_iterations)
+
+    self._backbone_max_level = min(
+        max(_EFFICIENTNET_LEVEL_ENDPOINTS.keys()), bifpn_max_level)
+    self._output_layer_names = [
+        _EFFICIENTNET_LEVEL_ENDPOINTS[i]
+        for i in range(bifpn_min_level, self._backbone_max_level + 1)]
+    self._output_layer_alias = [
+        'level_{}'.format(i)
+        for i in range(bifpn_min_level, self._backbone_max_level + 1)]
+
+    # Initialize the EfficientNet backbone.
+    # Note, this is currently done in the init method rather than in the build
+    # method, since doing so introduces an error which is not well understood.
+
+    #efficientnet_base = efficientnet_model.EfficientNet.from_name(
+    #    model_name=self._efficientnet_version,
+    #    overrides={'rescale_input': False})
+    # TODO: Fix this one path
+    model_path = "/home/jgaz/code/pid_reader/trainer/src/https/storageaccountdatav9498.blob.core.windows.net/pub/21dc09821e6e4b722b93878a078977483ba798dd/backbone"
+    efficientnet_base = tf.keras.models.load_model(model_path)
+
+    outputs = [efficientnet_base.get_layer(output_layer_name).output
+               for output_layer_name in self._output_layer_names]
+
+    self._efficientnet = tf.keras.Model(
+        inputs=efficientnet_base.inputs,
+        outputs=outputs)
+    self.classification_backbone = efficientnet_base
+    self._bifpn_stage = None
 
 class SSDEfficientNetB0BiFPNKerasFeatureExtractor(
     SSDEfficientNetBiFPNKerasFeatureExtractor):
