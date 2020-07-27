@@ -96,3 +96,6 @@ ENV/
 
 # For mac
 .DS_Store
+
+# Protobuff generated python classes
+research/object_detection/protos/
