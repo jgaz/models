@@ -19,6 +19,7 @@ from __future__ import division
 from __future__ import print_function
 
 from absl import logging
+from object_detection import config_checkpoint
 from six.moves import range
 from six.moves import zip
 import tensorflow.compat.v2 as tf
@@ -42,14 +43,15 @@ _EFFICIENTNET_LEVEL_ENDPOINTS = {
     5: 'stack_6/block_0/project_bn',
 }
 """
-# Highjacked endpoints
+# Hijacked endpoints
 _EFFICIENTNET_LEVEL_ENDPOINTS = {
     1: 'block1a_project_bn',
     2: 'block2b_add',
-    3: 'block2b_add',
+    3: 'block3b_add',
     4: 'block4c_add',
     5: 'block6a_project_bn'
 }
+
 
 class SSDEfficientNetBiFPNKerasFeatureExtractor(
     ssd_meta_arch.SSDKerasFeatureExtractor):
@@ -235,6 +237,7 @@ class SSDEfficientNetBiFPNKerasFeatureExtractor(
 
     return list(output_feature_map_dict.values())
 
+
 class SSDEfficientNetCustomBiFPNKerasFeatureExtractor(
     SSDEfficientNetBiFPNKerasFeatureExtractor):
   """SSD Keras EfficientNet-Custom BiFPN (EfficientDet-d0) Feature Extractor."""
@@ -315,7 +318,7 @@ class SSDEfficientNetCustomBiFPNKerasFeatureExtractor(
     #    model_name=self._efficientnet_version,
     #    overrides={'rescale_input': False})
     # TODO: Fix this one path
-    model_path = "/home/jgaz/code/pid_reader/trainer/src/https/storageaccountdatav9498.blob.core.windows.net/pub/21dc09821e6e4b722b93878a078977483ba798dd/backbone"
+    model_path = config_checkpoint.FINE_TUNE_CHECKPOINT
     efficientnet_base = tf.keras.models.load_model(model_path)
 
     outputs = [efficientnet_base.get_layer(output_layer_name).output
@@ -327,8 +330,30 @@ class SSDEfficientNetCustomBiFPNKerasFeatureExtractor(
     self.classification_backbone = efficientnet_base
     self._bifpn_stage = None
 
+  def _extract_features(self, preprocessed_inputs):
+    """Extract features from preprocessed inputs.
+
+    Args:
+      preprocessed_inputs: a [batch, height, width, channels] float tensor
+        representing a batch of images.
+
+    Returns:
+      feature_maps: a list of tensors where the ith tensor has shape
+        [batch, height_i, width_i, depth_i]
+    """
+    preprocessed_inputs = shape_utils.check_min_image_dim(
+        129, preprocessed_inputs)
+
+    base_feature_maps = self._efficientnet(
+        ops.pad_to_multiple(preprocessed_inputs, self._pad_to_multiple))
+
+    output_feature_map_dict = self._bifpn_stage(
+        list(zip(self._output_layer_alias, base_feature_maps)))
+    return list(output_feature_map_dict.values())
+
+
 class SSDEfficientNetB0BiFPNKerasFeatureExtractor(
-    SSDEfficientNetBiFPNKerasFeatureExtractor):
+  SSDEfficientNetBiFPNKerasFeatureExtractor):
   """SSD Keras EfficientNet-b0 BiFPN (EfficientDet-d0) Feature Extractor."""
 
   def __init__(self,

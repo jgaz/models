@@ -1,5 +1,5 @@
 # Training configuration for EfficientNet-b0 trained on ImageNet on GPUs.
-# Takes ~32 minutes per epoch for 8 V100s.
+# Takes ~32 minutes per epoch for 8 V100s. 175hrs 8 V100 -> 2K80 aprox 2000hrs
 # Reaches ~76.1% within 350 epochs.
 # Note: This configuration uses a scaled per-replica batch size based on the number of devices.
 runtime:

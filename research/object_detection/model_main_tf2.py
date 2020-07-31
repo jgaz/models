@@ -67,7 +67,6 @@ flags.DEFINE_integer(
 flags.DEFINE_boolean('record_summaries', True,
                      ('Whether or not to record summaries during'
                       ' training.'))
-
 FLAGS = flags.FLAGS
 
 
@@ -75,7 +74,6 @@ def main(unused_argv):
   flags.mark_flag_as_required('model_dir')
   flags.mark_flag_as_required('pipeline_config_path')
   tf.config.set_soft_device_placement(True)
-
   if FLAGS.checkpoint_dir:
     model_lib_v2.eval_continuously(
         pipeline_config_path=FLAGS.pipeline_config_path,
@@ -110,4 +108,5 @@ def main(unused_argv):
           record_summaries=FLAGS.record_summaries)
 
 if __name__ == '__main__':
+  # tf.config.experimental_run_functions_eagerly(True)
   tf.compat.v1.app.run()

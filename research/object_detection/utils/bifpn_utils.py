@@ -287,7 +287,7 @@ class BiFPNCombineLayer(tf.keras.layers.Layer):
     """
     super(BiFPNCombineLayer, self).__init__(**kwargs)
     self.combine_method = combine_method
-    print(f"Calling combine init, combine_method: {combine_method}")
+    # print(f"Calling combine init, combine_method: {combine_method}")
 
   def _combine_weighted_sum(self, inputs):
     return tf.squeeze(
@@ -300,16 +300,24 @@ class BiFPNCombineLayer(tf.keras.layers.Layer):
         tf.linalg.matmul(tf.stack(inputs, axis=-1), normalized_weights),
         axis=[-1])
 
+  # TODO: this is such a bad idea...
+  def _pad_to_equality(self, inputs):
+    # EfficientDet-Custom/bifpn/node_05/1_dn_lvl_3/combine/Pad:0
+    if inputs[0].shape == [32, 63, 63, 64] and inputs[1].shape == [32, 64, 64, 64]:
+      paddings = tf.constant(((0, 0), (0, 1), (0, 1), (0, 0)))
+      inputs[0] = tf.pad(inputs[0], paddings, "CONSTANT")
+    return inputs
+
   def _combine_fast_attention(self, inputs):
     weights_non_neg = tf.nn.relu(self.per_input_weights)
     normalizer = tf.reduce_sum(weights_non_neg) + 0.0001
     normalized_weights = weights_non_neg / normalizer
+    inputs = self._pad_to_equality(inputs)
     return tf.squeeze(
         tf.linalg.matmul(tf.stack(inputs, axis=-1), normalized_weights),
         axis=[-1])
 
   def build(self, input_shape):
-    print(f"Calling combine build, input shape: {input_shape}")
     if not isinstance(input_shape, list):
       raise ValueError('A BiFPN combine layer should be called '
                        'on a list of inputs.')

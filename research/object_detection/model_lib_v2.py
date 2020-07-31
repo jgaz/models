@@ -36,7 +36,7 @@ from object_detection.utils import config_util
 from object_detection.utils import label_map_util
 from object_detection.utils import ops
 from object_detection.utils import visualization_utils as vutils
-
+from object_detection import config_checkpoint
 # pylint: disable=g-import-not-at-top
 try:
   from tensorflow.contrib import tpu as contrib_tpu
@@ -114,9 +114,8 @@ def _compute_losses_and_predictions_dicts(
 
   """
   model_lib.provide_groundtruth(model, labels)
-  print(f"\n\n{model}, {features}\n\n")
+
   preprocessed_images = features[fields.InputDataFields.image]
-  print(f"\nPreprocessed images: {preprocessed_images}\n")
   prediction_dict = model.predict(
       preprocessed_images,
       features[fields.InputDataFields.true_image_shape],
@@ -450,6 +449,7 @@ def train_loop(
     record_summaries: Boolean, whether or not to record summaries.
     **kwargs: Additional keyword arguments for configuration override.
   """
+
   ## Parse the configs
   get_configs_from_pipeline_file = MODEL_BUILD_UTIL_MAP[
       'get_configs_from_pipeline_file']
@@ -469,6 +469,8 @@ def train_loop(
   model_config = configs['model']
   train_config = configs['train_config']
   train_input_config = configs['train_input_config']
+  # Set the information needed to load the backbone model
+  config_checkpoint.FINE_TUNE_CHECKPOINT = train_config.fine_tune_checkpoint
 
   unpad_groundtruth_tensors = train_config.unpad_groundtruth_tensors
   add_regularization_loss = train_config.add_regularization_loss
@@ -490,6 +492,7 @@ def train_loop(
   config_util.update_fine_tune_checkpoint_type(train_config)
   fine_tune_checkpoint_type = train_config.fine_tune_checkpoint_type
   fine_tune_checkpoint_version = train_config.fine_tune_checkpoint_version
+
 
   # Write the as-run pipeline config to disk.
   if save_final_config:
@@ -553,12 +556,13 @@ def train_loop(
           lambda: global_step % num_steps_per_iteration == 0):
         # Load a fine-tuning checkpoint.
         if train_config.fine_tune_checkpoint:
-          load_fine_tune_checkpoint(detection_model,
+          # Model loaded comes with weights, may be we don't need this...
+          """load_fine_tune_checkpoint(detection_model,
                                     train_config.fine_tune_checkpoint,
                                     fine_tune_checkpoint_type,
                                     fine_tune_checkpoint_version,
                                     train_input,
-                                    unpad_groundtruth_tensors)
+                                    unpad_groundtruth_tensors)"""
 
         ckpt = tf.compat.v2.train.Checkpoint(
             step=global_step, model=detection_model, optimizer=optimizer)
