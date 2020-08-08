@@ -309,6 +309,9 @@ class BiFPNCombineLayer(tf.keras.layers.Layer):
     elif inputs[0].shape == [8, 63, 63, 64] and inputs[1].shape == [8, 64, 64, 64]:
       paddings = tf.constant(((0, 0), (0, 1), (0, 1), (0, 0)))
       inputs[0] = tf.pad(inputs[0], paddings, "CONSTANT")
+    elif inputs[0].shape == [6, 63, 63, 64] and inputs[1].shape == [6, 64, 64, 64]:
+      paddings = tf.constant(((0, 0), (0, 1), (0, 1), (0, 0)))
+      inputs[0] = tf.pad(inputs[0], paddings, "CONSTANT")
 
     return inputs
 
