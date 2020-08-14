@@ -325,7 +325,7 @@ class BiFPNCombineLayer(tf.keras.layers.Layer):
     weights_non_neg = tf.nn.relu(self.per_input_weights)
     normalizer = tf.reduce_sum(weights_non_neg) + 0.0001
     normalized_weights = weights_non_neg / normalizer
-    inputs = self._pad_to_equality(inputs)
+    # inputs = self._pad_to_equality(inputs)
     return tf.squeeze(
         tf.linalg.matmul(tf.stack(inputs, axis=-1), normalized_weights),
         axis=[-1])
